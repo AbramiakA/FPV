@@ -21,6 +21,7 @@ class State(Enum):
     ARMING = auto()
     TAKEOFF = auto()
     WAIT_ALTITUDE = auto()
+    STABILIZING = auto()
     MOVE_TO_TARGET = auto()
     STOPPING = auto()
     LANDING = auto()
@@ -34,6 +35,7 @@ class TargetFlightNode(Node):
     LAND_MODE = 9
 
     TAKEOFF_ALTITUDE = 2.0
+    STABILIZATION_DURATION = 3.0
 
     DELTA_X = 7.0
     DELTA_Y = 1.4
@@ -57,6 +59,7 @@ class TargetFlightNode(Node):
         self.request_in_progress = False
         self.stop_counter = 0
         self.last_log_time = 0.0
+        self.stabilization_started_at = None
 
         self.status_sub = self.create_subscription(
             Status, "/ap/status", self.status_callback, 10
@@ -164,12 +167,30 @@ class TargetFlightNode(Node):
             if self.pose is not None:
                 altitude = self.pose.pose.position.z
 
-                if altitude >= 1.5:
+                if altitude >= 1.9:
                     self.get_logger().info(
                         f"Takeoff altitude reached: {altitude:.2f} m"
                     )
-                    self.get_logger().info("Starting horizontal flight")
-                    self.state = State.MOVE_TO_TARGET
+                    self.get_logger().info("Stabilizing at target altitude")
+                    self.stabilization_started_at = (
+                        self.get_clock().now().nanoseconds / 1e9
+                    )
+                    self.state = State.STABILIZING
+
+        elif self.state == State.STABILIZING:
+            now = self.get_clock().now().nanoseconds / 1e9
+
+            if (
+                self.stabilization_started_at is not None
+                and now - self.stabilization_started_at
+                >= self.STABILIZATION_DURATION
+            ):
+                self.get_logger().info(
+                    f"Stabilization completed after "
+                    f"{self.STABILIZATION_DURATION:.1f} seconds"
+                )
+                self.get_logger().info("Starting horizontal flight")
+                self.state = State.MOVE_TO_TARGET
 
         elif self.state == State.MOVE_TO_TARGET:
             self.move_to_target()
