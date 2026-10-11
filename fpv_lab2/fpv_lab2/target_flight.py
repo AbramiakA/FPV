@@ -178,6 +178,7 @@ class TargetFlightNode(Node):
                     self.state = State.STABILIZING
 
         elif self.state == State.STABILIZING:
+            self.publish_velocity(0.0, 0.0)
             now = self.get_clock().now().nanoseconds / 1e9
 
             if (
