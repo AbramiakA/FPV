@@ -34,10 +34,10 @@ class TargetFlightNode(Node):
     GUIDED_MODE = 4
     LAND_MODE = 9
 
-    TAKEOFF_ALTITUDE = 2.0
+    TAKEOFF_ALTITUDE = 3.5
     STABILIZATION_DURATION = 3.0
 
-    DELTA_X = 7.0
+    DELTA_X = 6.0
     DELTA_Y = 1.4
 
     TARGET_TOLERANCE = 0.25
@@ -62,31 +62,31 @@ class TargetFlightNode(Node):
         self.stabilization_started_at = None
 
         self.status_sub = self.create_subscription(
-            Status, "/ap/status", self.status_callback, 10
+            Status, "/ap/v1/status", self.status_callback, 10
         )
 
         self.pose_sub = self.create_subscription(
-            PoseStamped, "/ap/pose/filtered", self.pose_callback, qos_profile_sensor_data
+            PoseStamped, "/ap/v1/pose/filtered", self.pose_callback, qos_profile_sensor_data
         )
 
         self.velocity_pub = self.create_publisher(
-            TwistStamped, "/ap/cmd_vel", qos_profile_sensor_data
+            TwistStamped, "/ap/v1/cmd_vel", qos_profile_sensor_data
         )
 
         self.prearm_client = self.create_client(
-            Trigger, "/ap/prearm_check"
+            Trigger, "/ap/v1/prearm_check"
         )
 
         self.mode_client = self.create_client(
-            ModeSwitch, "/ap/mode_switch"
+            ModeSwitch, "/ap/v1/mode_switch"
         )
 
         self.arm_client = self.create_client(
-            ArmMotors, "/ap/arm_motors"
+            ArmMotors, "/ap/v1/arm_motors"
         )
 
         self.takeoff_client = self.create_client(
-            Takeoff, "/ap/experimental/takeoff"
+            Takeoff, "/ap/v1/experimental/takeoff"
         )
 
         self.timer = self.create_timer(0.1, self.control_loop)
@@ -167,7 +167,7 @@ class TargetFlightNode(Node):
             if self.pose is not None:
                 altitude = self.pose.pose.position.z
 
-                if altitude >= 1.9:
+                if altitude >= 3.4:
                     self.get_logger().info(
                         f"Takeoff altitude reached: {altitude:.2f} m"
                     )

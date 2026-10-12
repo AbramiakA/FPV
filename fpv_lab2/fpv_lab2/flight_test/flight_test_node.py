@@ -1,5 +1,6 @@
 from rclpy.node import Node
-from nav_msgs.msg import Odometry
+from rclpy.qos import qos_profile_sensor_data
+from geometry_msgs.msg import PoseStamped
 from std_srvs.srv import Trigger
 from ardupilot_msgs.msg import Status
 from ardupilot_msgs.srv import ArmMotors, ModeSwitch, Takeoff
@@ -20,42 +21,42 @@ class FlightTestNode(Node):
         self.state = FlightState.WAITING_FOR_SYSTEM
         self.request_in_progress = False
         self.status = None
-        self.odometry = None
+        self.pose = None
         self.hover_started_at = None
         self._handlers = HANDLERS
 
         self.status_subscription = self.create_subscription(
             Status,
-            "/ap/status",
+            "/ap/v1/status",
             self.status_callback,
             10,
         )
 
-        self.odometry_subscription = self.create_subscription(
-            Odometry,
-            "/odometry",
-            self.odometry_callback,
-            10,
+        self.pose_subscription = self.create_subscription(
+            PoseStamped,
+            "/ap/v1/pose/filtered",
+            self.pose_callback,
+            qos_profile_sensor_data,
         )
 
         self.prearm_client = self.create_client(
             Trigger,
-            "/ap/prearm_check",
+            "/ap/v1/prearm_check",
         )
 
         self.mode_client = self.create_client(
             ModeSwitch,
-            "/ap/mode_switch",
+            "/ap/v1/mode_switch",
         )
 
         self.arm_client = self.create_client(
             ArmMotors,
-            "/ap/arm_motors",
+            "/ap/v1/arm_motors",
         )
 
         self.takeoff_client = self.create_client(
             Takeoff,
-            "/ap/experimental/takeoff",
+            "/ap/v1/experimental/takeoff",
         )
 
         self.timer = self.create_timer(0.2, self.control_loop)
@@ -66,8 +67,8 @@ class FlightTestNode(Node):
     def status_callback(self, message):
         self.status = message
 
-    def odometry_callback(self, message):
-        self.odometry = message
+    def pose_callback(self, message):
+        self.pose = message
 
     def services_ready(self):
         return (

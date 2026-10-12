@@ -15,8 +15,8 @@ class WaitingForLandingHandler(FlightStateHandler):
         if not node.status.flying:
             node.get_logger().info("Landing completed")
 
-            if node.odometry is not None:
-                altitude = node.odometry.pose.pose.position.z
+            if node.pose is not None:
+                altitude = node.pose.pose.position.z
                 node.get_logger().info(
                     f"Final Gazebo altitude: {altitude:.2f} m"
                 )

@@ -14,8 +14,8 @@ class HoveringHandler(FlightStateHandler):
             node.fail("Drone disarmed unexpectedly during flight")
             return
 
-        if node.odometry is not None:
-            altitude = node.odometry.pose.pose.position.z
+        if node.pose is not None:
+            altitude = node.pose.pose.position.z
             node.get_logger().debug(
                 f"Gazebo altitude: {altitude:.2f} m"
             )
